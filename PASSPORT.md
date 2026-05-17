@@ -1,4 +1,4 @@
-# ПАСПОРТ ИНФРАСТРУКТУРЫ И НАВЫКОВ (17.05.2026)
+# ПАСПОРТ ИНФРАСТРУКТУРЫ И НАВЫКОВ (18.05.2026)
 
 ## Сервер
 - Хост: Aeza VPS, тариф HELs-1
@@ -9,19 +9,20 @@
 
 ## Сеть и безопасность
 - SSH порт: 4422
-- UFW: открыты 4422, 80, 443, 2053, 2083, 8443, 853; порт 53 временно открыт (⚠️ требуется закрыть, переход на DoT)
+- UFW: открыты 4422, 80, 443, 853, 2053, 2083, 8443
 - Fail2Ban: активен
 - Вход: по SSH-ключу (ed25519), пароль как запасной
 - Приватный ключ: сохранён на Google Диск (архив с паролем)
-- Бэкапы: ручной `save.sh` (системные файлы) + n8n (архивация backups → Telegram)
-- Пароли: удалены из переменных окружения Portainer, все секреты только в n8n Credentials
+- DNS: AdGuard Home работает по DNS-over-TLS (порт 853) и DoH (443). Порт 53 полностью закрыт.
+- Микрот: переведён на DoH (https://savinykh-tech.ru/dns-query) + резерв Cloudflare (1.1.1.1)
+- Пароли: удалены из переменных окружения, секреты только в n8n Credentials
 
 ## Сервисы (Docker)
 | Сервис | Порт | Статус |
 |--------|------|--------|
 | n8n | 3000 (через Caddy) | Running |
 | caddy | 80/443 | Running |
-| adguard | 53, 853 (DoT) | Running (53 открыт — подлежит закрытию) |
+| adguard | 853 (DoT), 443 (DoH) | Running |
 | 3x-ui (Xray) | 2053/2083/8443 | Running |
 | jarvis (Flask) | 5000 (внутренний) | Running |
 | watchtower | - | Running |
@@ -32,27 +33,23 @@
 - docker-compose.yaml: `/home/jarvis_admin/docker-compose.yaml`
 - Контейнер n8n: примонтирована папка `/home/jarvis_admin` как `/host` (Bind)
 - Контейнер n8n: примонтирован `/usr/bin/curl` с хоста (Bind, Read-only)
-- Переменная NODES_EXCLUDE="[]" добавлена для доступа к Execute Command
 
 ## Бэкапы
-- **Локальный:** `~/save.sh` (сохраняет системные конфиги в `~/backups/YYYYMMDD_HHMM/`)
-- **Удалённый:** воркфлоу n8n «Бэкап конфигов Docker» (один узел Execute Command)
-  - Команда: `tar -czf /host/full-backup-$(date +%Y%m%d).tar.gz -C /host backups && curl ...`
-  - Отправка: Telegram бот Jarvis, chat_id=487903609
-  - Частота: ручной запуск после изменений
-- **Воркфлоу n8n:** ключевые воркфлоу экспортируются в JSON вручную как дополнительная страховка
+- **Локальный:** `~/save.sh` (сохраняет системные конфиги в `~/backups/`)
+- **Удалённый:** воркфлоу n8n (архивирует папку `backups` → отправляет в Telegram)
+- **Частота:** ручной запуск после изменений, в перспективе crontab
 
 ## Навыки
 ### Уверенно
 - Базовые команды Linux, SSH-ключи
-- Docker run/stop, docker-compose up/down
-- n8n: HTTP-запросы, пагинация, фильтрация, Telegram, Credentials, Execute Command
-- JSON, Git (add, commit, push, remote)
-- Монтирование папок и файлов в контейнеры (через Portainer)
-- tar, curl, chown внутри контейнеров
+- Docker run/stop, монтирование файлов и папок в контейнеры
+- n8n: HTTP-запросы, пагинация, фильтрация, Credentials, Execute Command, отправка файлов
+- Git (add, commit, push, remote)
+- DNS-over-TLS/DoH, базовая сетевая безопасность (UFW, Fail2Ban)
+- Работа с WinBox (MikroTik)
 
 ### Изучаю
-- CLI-утилиты (htop, journalctl, du, df, docker logs)
+- CLI-утилиты (journalctl, docker logs, htop, df, du)
 - Docker Compose (глубоко)
 
 ### Не знаю
