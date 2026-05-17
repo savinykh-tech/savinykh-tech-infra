@@ -13,7 +13,7 @@
 - Fail2Ban: активен
 - Вход: по SSH-ключу (ed25519), пароль как запасной
 - Приватный ключ: сохранён на Google Диск (архив с паролем)
-- Бэкапы: настроен воркфлоу n8n (архив docker-compose.yaml + knowledge → Telegram)
+- Бэкапы: ручной `save.sh` (системные файлы) + n8n (архивация backups → Telegram)
 - Пароли: удалены из переменных окружения Portainer, все секреты только в n8n Credentials
 
 ## Сервисы (Docker)
@@ -35,11 +35,12 @@
 - Переменная NODES_EXCLUDE="[]" добавлена для доступа к Execute Command
 
 ## Бэкапы
-- Воркфлоу: «Бэкап конфигов Docker» (один узел Execute Command)
-- Команда: tar + chown + curl (три команды через &&)
-- Архив: docker-compose.yaml + папка knowledge
-- Отправка: Telegram бот Jarvis, chat_id=487903609
-- Частота: ручной запуск (расписание будет добавлено позже)
+- **Локальный:** `~/save.sh` (сохраняет системные конфиги в `~/backups/YYYYMMDD_HHMM/`)
+- **Удалённый:** воркфлоу n8n «Бэкап конфигов Docker» (один узел Execute Command)
+  - Команда: `tar -czf /host/full-backup-$(date +%Y%m%d).tar.gz -C /host backups && curl ...`
+  - Отправка: Telegram бот Jarvis, chat_id=487903609
+  - Частота: ручной запуск после изменений
+- **Воркфлоу n8n:** ключевые воркфлоу экспортируются в JSON вручную как дополнительная страховка
 
 ## Навыки
 ### Уверенно
@@ -48,10 +49,10 @@
 - n8n: HTTP-запросы, пагинация, фильтрация, Telegram, Credentials, Execute Command
 - JSON, Git (add, commit, push, remote)
 - Монтирование папок и файлов в контейнеры (через Portainer)
+- tar, curl, chown внутри контейнеров
 
 ### Изучаю
 - CLI-утилиты (htop, journalctl, du, df, docker logs)
-- curl, tar, chown
 - Docker Compose (глубоко)
 
 ### Не знаю
